@@ -2,18 +2,12 @@ const { createShortUrl, getLongUrl } = require("../services/urlService");
 
 exports.shorten = async (req, res) => {
   try {
-    const { longUrl } = req.body;
+    const { url } = req.body;
 
-    if (!longUrl) {
-      return res.status(400).json({ error: "longUrl is required" });
-    }
-
-    const shortCode = await createShortUrl(longUrl);
-
-    // const shortCode = await createShortUrl(url);
+    const shortCode = await createShortUrl(url);
 
     res.json({
-      shortUrl: `http://localhost:3000/${shortCode}`
+      shortUrl: `http://${req.headers.host}/${shortCode}`
     });
   } catch (err) {
     console.error("SHORTEN ERROR:", err);
@@ -25,7 +19,11 @@ exports.redirect = async (req, res) => {
   try {
     const { code } = req.params;
 
+    console.log("REDIRECT HIT:", code); // 👈 ADD THIS
+
     const longUrl = await getLongUrl(code);
+
+    console.log("LONG URL:", longUrl); // 👈 ADD THIS
 
     if (!longUrl) return res.status(404).send("Not found");
 
