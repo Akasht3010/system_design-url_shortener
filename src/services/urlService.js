@@ -31,56 +31,56 @@ async function createShortUrl(longUrl) {
 
 // 🔹 Get long URL (with cache)
 async function getLongUrl(shortCode) {
-  let longUrl;
-  let url;
-
   try {
     const cached = await redis.get(shortCode);
-
     if (cached) {
       console.log("CACHE HIT");
-      longUrl = cached;
 
-      // 🔹 still need DB for id
-      url = await prisma.url.findUnique({
-        where: { shortCode }
-      });
-    } else {
-      console.log("CACHE MISS");
-
-      url = await prisma.url.findUnique({
+      // ❗ Still need DB for click tracking
+      const url = await prisma.url.findUnique({
         where: { shortCode }
       });
 
-      if (!url) return null;
+      if (url) {
+        await prisma.url.update({
+          where: { id: url.id },
+          data: { clickCount: { increment: 1 } }
+        });
 
-      longUrl = url.longUrl;
+        await prisma.click.create({
+          data: { urlId: url.id }
+        });
+      }
 
-      try {
-        await redis.set(shortCode, longUrl);
-      } catch (err) { }
+      return cached;
     }
   } catch (err) {
     console.log("Redis error, fallback to DB");
-
-    url = await prisma.url.findUnique({
-      where: { shortCode }
-    });
-
-    if (!url) return null;
-
-    longUrl = url.longUrl;
   }
 
-  // 🔹 ALWAYS track click
-  // 🔹 Push click event to queue
-  if (url) {
-    await clickQueue.add("track-click", {
-      urlId: url.id
-    });
-  }
+  console.log("CACHE MISS");
 
-  return longUrl;
+  const url = await prisma.url.findUnique({
+    where: { shortCode }
+  });
+
+  if (!url) return null;
+
+  // ✅ Track click
+  await prisma.url.update({
+    where: { id: url.id },
+    data: { clickCount: { increment: 1 } }
+  });
+
+  await prisma.click.create({
+    data: { urlId: url.id }
+  });
+
+  try {
+    await redis.set(shortCode, url.longUrl);
+  } catch (err) {}
+
+  return url.longUrl;
 }
 
 
