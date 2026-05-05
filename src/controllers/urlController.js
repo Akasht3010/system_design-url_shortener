@@ -1,4 +1,6 @@
 const { createShortUrl, getLongUrl } = require("../services/urlService");
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 exports.shorten = async (req, res) => {
   try {

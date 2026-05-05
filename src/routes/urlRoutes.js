@@ -1,3 +1,4 @@
+const { shorten, redirect, getAnalytics } = require("../controllers/urlController");
 const express = require("express");
 const router = express.Router();
 
