@@ -52,12 +52,26 @@ exports.getAnalytics = async (req, res) => {
 
     if (!url) return res.status(404).json({ error: "Not found" });
 
+    // group clicks by date
+    const grouped = {};
+
+    url.clicks.forEach(click => {
+      const date = click.timestamp.toISOString().split("T")[0];
+
+      grouped[date] = (grouped[date] || 0) + 1;
+    });
+
+    const clicksByDate = Object.entries(grouped).map(([date, count]) => ({
+      date,
+      count
+    }));
+
     res.json({
       shortCode: code,
       longUrl: url.longUrl,
       totalClicks: url.clickCount,
       createdAt: url.createdAt,
-      recentClicks: url.clicks
+      clicksByDate
     });
   } catch (err) {
     console.error("ANALYTICS ERROR:", err);
