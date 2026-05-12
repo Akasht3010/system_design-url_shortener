@@ -1,10 +1,10 @@
 const rateLimit = require("express-rate-limit");
 const RedisStore = require("rate-limit-redis").default;
 const redis = require("./config/redis");
+const express = require("express");
 const cors = require("cors");
 
 require("dotenv").config();
-const express = require("express");
 
 const app = express();
 app.use(cors());
